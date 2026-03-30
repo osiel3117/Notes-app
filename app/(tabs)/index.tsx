@@ -2,21 +2,21 @@ import Feather from '@expo/vector-icons/Feather';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    FlatList,
-    KeyboardAvoidingView,
-    LayoutAnimation,
-    Modal,
-    Platform,
-    Pressable,
-    SafeAreaView,
-    StyleSheet,
-    Text,
-    TextInput,
-    UIManager,
-    View,
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  KeyboardAvoidingView,
+  LayoutAnimation,
+  Modal,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  UIManager,
+  View,
 } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type Note = {
   id: string;
@@ -28,6 +28,7 @@ type Note = {
 const STORAGE_KEY = 'notes-app:notes';
 
 export default function NotesScreen() {
+  const insets = useSafeAreaInsets();
   const [notes, setNotes] = useState<Note[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [title, setTitle] = useState('');
@@ -43,6 +44,11 @@ export default function NotesScreen() {
   const [isReadyToPersist, setIsReadyToPersist] = useState(false);
   const trimmedSearchQuery = searchQuery.trim().toLowerCase();
   const isSaveDisabled = !title.trim() || !content.trim();
+  const containerPaddingTop = insets.top + 14;
+  const containerPaddingBottom = Math.max(insets.bottom, 20);
+  const floatingButtonBottom = Math.max(insets.bottom, 16) + 14;
+  const listBottomPadding = 120 + Math.max(insets.bottom, 12);
+  const modalBottomPadding = 34 + Math.max(insets.bottom, 8);
   const filteredNotes = notes.filter((note) => {
     if (!trimmedSearchQuery) {
       return true;
@@ -263,7 +269,7 @@ export default function NotesScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView edges={['left', 'right']} style={styles.safeArea}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#3f5b4b" />
           <Text style={styles.loadingText}>Loading notes...</Text>
@@ -273,8 +279,15 @@ export default function NotesScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
+    <SafeAreaView edges={['left', 'right']} style={styles.safeArea}>
+      <View
+        style={[
+          styles.container,
+          {
+            paddingTop: containerPaddingTop,
+            paddingBottom: containerPaddingBottom,
+          },
+        ]}>
         <View style={styles.headerSection}>
           <View style={styles.header}>
             <View style={styles.headerTopRow}>
@@ -322,7 +335,10 @@ export default function NotesScreen() {
           data={filteredNotes}
           keyExtractor={(item) => item.id}
           renderItem={renderNote}
-          contentContainerStyle={filteredNotes.length === 0 ? styles.emptyListContent : styles.listContent}
+          contentContainerStyle={[
+            filteredNotes.length === 0 ? styles.emptyListContent : styles.listContent,
+            { paddingBottom: listBottomPadding },
+          ]}
           showsVerticalScrollIndicator={false}
           ItemSeparatorComponent={() => <View style={styles.noteSpacer} />}
           ListEmptyComponent={
@@ -350,7 +366,11 @@ export default function NotesScreen() {
         />
 
         <Pressable
-          style={({ pressed }) => [styles.floatingButton, pressed && styles.floatingButtonPressed]}
+          style={({ pressed }) => [
+            styles.floatingButton,
+            { bottom: floatingButtonBottom },
+            pressed && styles.floatingButtonPressed,
+          ]}
           onPress={openCreateNote}>
           <View style={styles.floatingButtonIconWrap}>
             <Text style={styles.floatingButtonPlus}>+</Text>
@@ -362,7 +382,7 @@ export default function NotesScreen() {
           <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             style={styles.modalOverlay}>
-            <View style={styles.modalCard}>
+            <View style={[styles.modalCard, { paddingBottom: modalBottomPadding }]}>
               <View style={styles.modalHandle} />
               <View style={styles.modalHeader}>
                 <View>
@@ -489,8 +509,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: 20,
-    paddingTop: 14,
-    paddingBottom: 24,
   },
   loadingContainer: {
     flex: 1,
@@ -737,7 +755,6 @@ const styles = StyleSheet.create({
   floatingButton: {
     position: 'absolute',
     right: 20,
-    bottom: 30,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
@@ -784,7 +801,6 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 36,
     paddingHorizontal: 20,
     paddingTop: 24,
-    paddingBottom: 34,
     gap: 20,
     minHeight: '72%',
     shadowColor: '#161b21',
